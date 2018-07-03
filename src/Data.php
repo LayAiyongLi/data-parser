@@ -2,125 +2,29 @@
 
 namespace Lay\DataParser;
 
-class Data implements \ArrayAccess, \Iterator, \JsonSerializable
+use DocBlockReader\Reader;
+use stdClass;
+
+/**
+ * @Ignore 忽略
+ * @String 字符型
+ * @Number 数值型
+ * @Integer 数值型
+ * @Float 浮点型
+ * @Double 双精度浮点型
+ * @Array 数组型
+ * @StdClass 对象型
+ * @Boolean 布尔型
+ * @Datetime 日期时间型
+ * @Date 日期型
+ * @Time 时间型
+ * @DateFormat 自定义时间型
+ * @Json Json类型
+ * @Format 自定义类型
+ */
+
+abstract class Data implements \ArrayAccess, \Iterator, \JsonSerializable
 {
-    /**
-     * 忽略类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_IGNORE = 0;
-    /**
-     * 字符串类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_STRING = 1;
-    const TYPE_STR = 1;
-    /**
-     * 数值类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_NUMBER = 2;
-    /**
-     * 整数类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_INTEGER = 3;
-    const TYPE_INT = 3;
-    /**
-     * 布尔类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_BOOLEAN = 4;
-    const TYPE_BOOL = 4;
-    /**
-     * 日期时间类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_DATETIME = 5;
-    /**
-     * 日期类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_DATE = 6;
-    /**
-     * 时间类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_TIME = 7;
-    /**
-     * 浮点数类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_FLOAT = 8;
-    /**
-     * double类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_DOUBLE = 9;
-    /**
-     * 数组类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_ARRAY = 10;
-    /**
-     * 数组类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_PURE_ARRAY = 11;
-    /**
-     * 特定格式类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_DATEFORMAT = 12;
-    /**
-     * 指定值范围的属性值
-     *
-     * @var int
-     */
-    const TYPE_ENUM = 13;
-    /**
-     * 其他类型的属性值
-     *
-     * @var int
-     */
-    const TYPE_FORMAT = 14;
-    /**
-     * stdClass.
-     *
-     * @var int
-     */
-    const TYPE_STDCLASS = 15;
-    /**
-     * json object array.
-     *
-     * @var int
-     */
-    const TYPE_JSON_OBJECT = 16;
-    /**
-     * json array.
-     *
-     * @var int
-     */
-    const TYPE_JSON_ARRAY = 17;
-    /**
-     * object.
-     *
-     * @var int
-     */
-    const TYPE_OBJECT = 18;
     /**
      * all components' properties.
      */
@@ -186,24 +90,54 @@ class Data implements \ArrayAccess, \Iterator, \JsonSerializable
     public static function parse($obj, $keys = array())
     {
         $object = self::instance();
-        $mapping = $object->mapping();
+        // $mapping = $object->mapping();
         if (is_object($obj)) {
             foreach ($object->properties() as $pro => $def) {
                 // property and property mapping
-                $map = array_key_exists($pro, $mapping) ? $mapping[$pro] : false;
+                $reader = new Reader(get_called_class(), $pro, 'property');
+                $params = $reader->getParameters();
+                $map = false;
+                if(!empty($params)) {
+                    foreach ($params as $param => $option) {
+                        if(strtolower($param) == 'mapping') {
+                            $map = is_string($option) ? $option : $map;
+                        }
+                    }
+                }
+                // $map = array_key_exists($pro, $mapping) ? $mapping[$pro] : false;
                 $prop = !($map && isset($obj->$map)) ? $pro : $map;
                 $object->__set($pro, isset($obj->$prop) && !is_null($obj->$prop) ? $obj->$prop : $def);
             }
         } elseif (is_array($obj) && !empty($obj)) {
             foreach ($object->properties() as $pro => $def) {
                 // property and property mapping
-                $map = array_key_exists($pro, $mapping) ? $mapping[$pro] : false;
+                $reader = new Reader(get_called_class(), $pro, 'property');
+                $params = $reader->getParameters();
+                $map = false;
+                if(!empty($params)) {
+                    foreach ($params as $param => $option) {
+                        if(strtolower($param) == 'mapping') {
+                            $map = is_string($option) ? $option : $map;
+                        }
+                    }
+                }
+                // $map = array_key_exists($pro, $mapping) ? $mapping[$pro] : false;
                 $prop = !($map && isset($obj[$map])) ? $pro : $map;
                 $object->__set($pro, isset($obj[$prop]) && !is_null($obj[$prop]) ? $obj[$prop] : $def);
             }
         }
         // 扩展一些属性
-        $defs = $object->expandKeys();
+        $reader = new Reader(get_called_class(), 'expand');
+        $params = $reader->getParameters();
+        $defs = [];
+        if(!empty($params)) {
+            foreach ($params as $param => $option) {
+                if (strtolower($param) == 'defaultkey') {
+                    $defs = is_array($option) ? $option : $defs;
+                }
+            }
+        }
+        // $defs = $object->expandKeys();
         $keys = array_merge($defs, $keys);
         if (!empty($keys)) {
             foreach ($keys as $key => $next) {
@@ -263,11 +197,6 @@ class Data implements \ArrayAccess, \Iterator, \JsonSerializable
         return self::$properties[$class];
     }
 
-    protected function expandKeys()
-    {
-        return [];
-    }
-
     /**
      * 扩展属性.
      *
@@ -286,6 +215,7 @@ class Data implements \ArrayAccess, \Iterator, \JsonSerializable
      */
     public function mapping()
     {
+
         return array();
     }
 
@@ -468,114 +398,89 @@ class Data implements \ArrayAccess, \Iterator, \JsonSerializable
      */
     final public function __set($name, $value)
     {
-        if ($this->__isset($name)) {
-            $rules = $this->rules();
-            if (!empty($rules) && array_key_exists($name, $rules)) {
-                switch ($rules[$name]) {
-                    case self::TYPE_IGNORE:
-                        $this->$name = $value;
-                        break;
-                    case self::TYPE_STRING:
+        $reader = new Reader(get_called_class(), $name, 'property');
+        $params = $reader->getParameters();
+        if(!empty($params)) {
+            foreach ($params as $param => $option) {
+                switch (strtolower($param)) {
+                    case 'string':
                         $this->$name = trim(strval($value));
                         break;
-                    case self::TYPE_NUMBER:
-                        $this->$name = 0 + $value;
-                        break;
-                    case self::TYPE_INTEGER:
+                    case 'integer':
                         $this->$name = intval($value);
                         break;
-                    case self::TYPE_BOOLEAN:
+                    case 'number':
+                        $this->$name = 0 + $value;
+                        break;
+                    case 'boolean':
                         $this->$name = $value ? true : false;
                         break;
-                    case self::TYPE_DATETIME:
-                        if ('0000-00-00 00:00:00' == $value || empty($value)) {
+                    case 'datetime':
+                        if ('0000-00-00' == $value || '0000-00-00 00:00:00' == $value || '00:00:00' == $value || empty($value)) {
                             $this->$name = '';
                         } else {
                             $this->$name = !is_numeric($value) ? !is_string($value) ? $this->$name : date('Y-m-d H:i:s', strtotime($value)) : date('Y-m-d H:i:s', intval($value));
                         }
                         break;
-                    case self::TYPE_DATE:
-                        if ('0000-00-00' == $value || '0000-00-00 00:00:00' == $value || empty($value)) {
+                    case 'date':
+                        if ('0000-00-00' == $value || '0000-00-00 00:00:00' == $value || '00:00:00' == $value || empty($value)) {
                             $this->$name = '';
                         } else {
                             $this->$name = !is_numeric($value) ? !is_string($value) ? $this->$name : date('Y-m-d', strtotime($value)) : date('Y-m-d', intval($value));
                         }
                         break;
-                    case self::TYPE_TIME:
-                        $this->$name = !is_numeric($value) ? !is_string($value) ? $this->$name : date('H:i:s', strtotime($value)) : date('H:i:s', intval($value));
+                    case 'time':
+                        if ('0000-00-00' == $value || '0000-00-00 00:00:00' == $value || '00:00:00' == $value || empty($value)) {
+                            $this->$name = '';
+                        } else {
+                            $this->$name = !is_numeric($value) ? !is_string($value) ? $this->$name : date('H:i:s', strtotime($value)) : date('H:i:s', intval($value));
+                        }
                         break;
-                    case self::TYPE_FLOAT:
-                        $this->$name = floatval($value);
+                    case 'dateformat':
+                        if ('0000-00-00' == $value || '0000-00-00 00:00:00' == $value || '00:00:00' == $value || empty($value)) {
+                            $this->$name = '';
+                        } else {
+                            $format = is_string($option) ? $option : 'Y-m-d H:i:s';
+                            $this->$name = !is_numeric($value) ? !is_string($value) ? $this->$name : date($format, strtotime($value)) : date($format, intval($value));
+                        }
                         break;
-                    case self::TYPE_DOUBLE:
-                        $this->$name = doubleval($value);
+                    case 'float':
+                        $round = is_integer($option) ? $option : true;
+                        $this->$name = $round === true ? floatval($value) : round(floatval($value), $round);
                         break;
-                    case self::TYPE_ARRAY:
+                    case 'double':
+                        $round = is_integer($option) ? $option : true;
+                        $this->$name = $round === true ? doubleval($value) : round(doubleval($value), $round);
+                        break;
+                    case 'array':
                         $this->$name = !is_array($value) ? $this->$name : $value;
                         break;
-                    case self::TYPE_PURE_ARRAY:
-                        $this->$name = !is_array($value) ? $this->$name : self::toPureArray($value);
-                        break;
-                    case self::TYPE_STDCLASS:
+                    case 'stdclass':
+                    case 'object':
                         $this->$name = empty($value) || !is_object($value) ? new stdClass() : $value;
                         break;
-                    case self::TYPE_JSON_OBJECT:
+                    case 'json':
                         if (is_string($value)) {
-                            $value = json_decode($value, true);
-                        }
-                        if (empty($value)) {
+                            $value = json_decode($value);
+                        } elseif (empty($value)) {
                             $value = new stdClass();
-                        } elseif (is_object($value) && method_exists($value, 'toArray')) {
-                            $value = $value->toArray();
-                        } elseif (is_object($value)) {
-                            $value = get_object_vars($value);
+                        } elseif (is_object($value) || is_array($value)) {
+                            $value = json_decode(json_encode($value));
                         } else {
                             $value = new stdClass();
                         }
-                        $this->$name = self::isAssocArray($value) ? $value : new stdClass();
                         break;
-                    case self::TYPE_JSON_ARRAY:
-                        if (is_string($value)) {
-                            $value = json_decode($value, true);
-                        }
-                        if (empty($value)) {
-                            $value = array();
-                        } elseif (is_object($value) && method_exists($value, 'toArray')) {
-                            $value = $value->toArray();
-                        } elseif (is_object($value)) {
-                            $value = get_object_vars($value);
-                        } else {
-                            $value = array();
-                        }
-                        $this->$name = self::isAssocArray($value) ? array_values($value) : $value;
+                    case 'format':
+                        $options = $option === true ? [] : $option;
+                        $this->$name = $this->format($value, $name, $options);
                         break;
-                    case self::TYPE_OBJECT:
-                        $this->$name = is_null($value) || !is_object($value) ? null : $value;
-                        break;
-                    case self::TYPE_FORMAT:
-                        $this->$name = $this->format($value, $name);
-                        break;
+                    
                     default:
-                        if (is_array($rules[$name]) && $pure = self::toPureArray($rules[$name])) {
-                            if (count($pure) > 1 && self::TYPE_DATEFORMAT == $pure[0]) {
-                                $this->$name = !is_numeric($value) ? !is_string($value) ?: date($pure[1], strtotime($value)) : date($pure[1], intval($value));
-                            } elseif (count($pure) > 1 && self::TYPE_ENUM == $pure[0]) {
-                                $this->$name = !in_array($value, (array) $pure[1]) ?: $value;
-                            } elseif (count($pure) > 1 && self::TYPE_FORMAT == $pure[0]) {
-                                $this->$name = $this->format($value, $name, (array) $pure[1]);
-                            } elseif (count($pure) > 1 && self::TYPE_FLOAT == $pure[0]) {
-                                $this->$name = round(floatval($value), $pure[1]);
-                            } elseif (count($pure) > 1 && self::TYPE_DOUBLE == $pure[0]) {
-                                $this->$name = round(doubleval($value), $pure[1]);
-                            }
-                        }
                         break;
                 }
-            } else {
-                $this->$name = $value;
             }
         } else {
-            throw new \Exception("Undefined property $name in class ".get_called_class());
+            $this->$name = $value;
         }
     }
 

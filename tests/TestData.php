@@ -6,12 +6,29 @@ use Lay\DataParser\Data;
 
 class TestData extends Data
 {
-	protected $foo = 0;
-	
-	public function rules()
+	/**
+	 * @String
+	 */
+	protected $foo = '';
+	/**
+	 * @String
+	 * @Mapping "map"
+	 */
+	protected $bar = '';
+	/**
+	 * @Integer
+	 */
+	protected $exp = 0;
+	/**
+	 * @DefaultKey ["exp"]
+	 */
+	public function expand($key, $next = array(), $option = array())
 	{
-		return array_merge(parent::rules(), [
-			'foo' => self::TYPE_INTEGER
-		]);
+		switch ($key) {
+			case 'exp':
+				$this->__set('exp', '10000abc');
+				break;
+		}
+		return parent::expand($key, $next, $option);
 	}
 }

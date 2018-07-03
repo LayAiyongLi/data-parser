@@ -11,14 +11,16 @@ class Tests extends TestCase
 {
     public function testData()
     {
-        $row = ['foo' => 'bar'];
+        $row = ['foo' => 'bar', 'map' => 'ksn'];
         $data = TestData::parse($row);
+        var_dump($data);
         $this->assertInstanceOf(Data::class, $data);
     }
     public function testDataArray()
     {
-        $rows = [['foo' => 'bar']];
+        $rows = [['foo' => 'bar', 'map' => 'ksn']];
         $dataArray = TestData::parseArray($rows);
+        var_dump($dataArray);
         $this->assertInstanceOf(DataArray::class, $dataArray);
     }
 }
