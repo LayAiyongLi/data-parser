@@ -1,11 +1,11 @@
 {
-    "name": "LayAiyongLi/data-parser",
+    "name": "layliaiyong/data-parser",
     "description": "数据标准化转换器",
     "keywords": ["data", "parser", "format"],
     "type": "library",
     "support": {
-        "issues": "https://github.com/LayAiyongLi/data-parser/issues",
-        "source": "https://github.com/LayAiyongLi/data-parser"
+        "issues": "https://github.com/layliaiyong/data-parser/issues",
+        "source": "https://github.com/layliaiyong/data-parser"
     },
     "authors": [
         {
