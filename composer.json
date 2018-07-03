@@ -1,0 +1,33 @@
+{
+    "name": "LayAiyongLi/data-parser",
+    "description": "数据标准化转换器",
+    "keywords": ["data", "parser", "format"],
+    "type": "library",
+    "support": {
+        "issues": "https://github.com/LayAiyongLi/data-parser/issues",
+        "source": "https://github.com/LayAiyongLi/data-parser"
+    },
+    "authors": [
+        {
+            "name": "liaiyong",
+            "email": "lay@liaiyong.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lay\\DataParser\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lay\\DataParser\\Tests\\": "tests"
+        }
+    },
+    "license": "MIT"
+}
