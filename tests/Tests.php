@@ -11,16 +11,19 @@ class Tests extends TestCase
 {
     public function testData()
     {
-        $row = ['foo' => 'bar', 'map' => 'ksn'];
+        $row = new \stdClass;
+        $row->foo = 'bar';
+        $row->bar = 'com';
+        $row->fmt = 'org';
         $data = TestData::parse($row);
-        var_dump($data);
+        print_r($data);
         $this->assertInstanceOf(Data::class, $data);
     }
     public function testDataArray()
     {
-        $rows = [['foo' => 'bar', 'map' => 'ksn']];
+        $rows = [['foo' => 'bar', 'bar' => 'com', 'fmt' => 'org']];
         $dataArray = TestData::parseArray($rows);
-        var_dump($dataArray);
+        print_r($dataArray);
         $this->assertInstanceOf(DataArray::class, $dataArray);
     }
 }

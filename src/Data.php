@@ -21,8 +21,9 @@ use stdClass;
  * @DateFormat 自定义时间型
  * @Json Json类型
  * @Format 自定义类型
+ *
+ * @Mapping 输入别名
  */
-
 abstract class Data implements \ArrayAccess, \Iterator, \JsonSerializable
 {
     /**
